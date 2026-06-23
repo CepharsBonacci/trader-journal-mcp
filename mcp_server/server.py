@@ -170,7 +170,17 @@ async def get_behavioral_insights():
         response = await client.get(
             f"{BASE_URL}/behavior/insights"
         )
-        return response.json()    
+        return response.json() 
+
+
+@mcp.tool()
+async def get_pattern_detection():
+    """Detect best and worst trading patterns using strategy, setup, and emotion."""
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"{BASE_URL}/context/patterns"
+        )
+        return response.json()   
 
 
 @mcp.tool()

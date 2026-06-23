@@ -9,7 +9,8 @@ from app.analytics import (
     get_emotion_performance,
     get_setup_performance,
     get_monthly_performance,
-    get_strategy_emotion_performance
+    get_strategy_emotion_performance,
+    get_pattern_detection
 )
 
 router = APIRouter(prefix="/context", tags=["Context"])
@@ -80,4 +81,11 @@ def strategy_emotions():
     return {
         "status": "success",
         "data": get_strategy_emotion_performance()
+    }
+
+@router.get("/patterns")
+def patterns():
+    return {
+        "status": "success",
+        "data": get_pattern_detection()
     }

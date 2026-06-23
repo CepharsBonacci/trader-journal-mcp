@@ -21,7 +21,8 @@ from app.analytics import (
     get_trading_coach_report,
     generate_dynamic_recommendations,
     analyze_trade_notes,
-    get_behavioral_insights
+    get_behavioral_insights,
+    get_pattern_detection
 )
 
 print("SUMMARY")
@@ -92,3 +93,6 @@ print(analyze_trade_notes())
 
 print("\nBEHAVIORAL INSIGHTS")
 print(get_behavioral_insights())
+
+print("\nPATTERN DETECTION")
+print(get_pattern_detection())

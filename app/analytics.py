@@ -786,6 +786,7 @@ def get_trading_coach_report():
     dynamic_recommendations = generate_dynamic_recommendations()["recommendations"]
     notes_analysis = analyze_trade_notes()
     behavioral_insights = get_behavioral_insights()
+    patterns = get_pattern_detection()
 
     overall = edge["overall_performance"]
     confidence = get_analysis_confidence(overall["total_trades"])
@@ -836,6 +837,10 @@ Behavioral Insights
     f"- {insight}"
     for insight in behavioral_insights["insights"]
 ]) if isinstance(behavioral_insights, dict) and "insights" in behavioral_insights else "- No behavioral insights available."}
+
+Pattern Detection
+- Best Pattern: {patterns["best_pattern"]["strategy"]} + {patterns["best_pattern"]["setup"]} + {patterns["best_pattern"]["emotion"]} | Profit: {patterns["best_pattern"]["net_profit"]} | Win Rate: {patterns["best_pattern"]["win_rate"]}%
+- Worst Pattern: {patterns["worst_pattern"]["strategy"]} + {patterns["worst_pattern"]["setup"]} + {patterns["worst_pattern"]["emotion"]} | Profit: {patterns["worst_pattern"]["net_profit"]} | Win Rate: {patterns["worst_pattern"]["win_rate"]}%
 
 Coach Recommendation
 {chr(10).join([f"- {rec}" for rec in dynamic_recommendations])}
@@ -1050,4 +1055,58 @@ def get_behavioral_insights():
         "strongest_behavior": strongest_behavior,
         "weakest_behavior": weakest_behavior,
         "insights": insights
+    }
+
+
+def get_pattern_detection():
+
+    query = text("""
+        SELECT
+            strategy,
+            setup,
+            emotion,
+            profit
+        FROM trades
+        WHERE strategy IS NOT NULL
+        AND setup IS NOT NULL
+        AND emotion IS NOT NULL
+    """)
+
+    df = pd.read_sql(query, engine)
+
+    if len(df) == 0:
+        return {
+            "message": "No strategy, setup, and emotion data available"
+        }
+
+    pattern_stats = (
+        df.groupby(["strategy", "setup", "emotion"])
+        .agg(
+            trades=("profit", "count"),
+            net_profit=("profit", "sum"),
+            average_profit=("profit", "mean"),
+            winning_trades=("profit", lambda x: (x > 0).sum()),
+            losing_trades=("profit", lambda x: (x < 0).sum())
+        )
+        .reset_index()
+    )
+
+    pattern_stats["win_rate"] = (
+        pattern_stats["winning_trades"]
+        / pattern_stats["trades"]
+        * 100
+    ).round(2)
+
+    pattern_stats = pattern_stats.sort_values(
+        by="net_profit",
+        ascending=False
+    )
+
+    best_pattern = pattern_stats.iloc[0].to_dict()
+    worst_pattern = pattern_stats.iloc[-1].to_dict()
+
+    return {
+        "best_pattern": best_pattern,
+        "worst_pattern": worst_pattern,
+        "all_patterns": pattern_stats.to_dict(orient="records")
     }
