@@ -20,7 +20,8 @@ from app.analytics import (
     analyze_my_edge,
     get_trading_coach_report,
     generate_dynamic_recommendations,
-    analyze_trade_notes
+    analyze_trade_notes,
+    get_behavioral_insights
 )
 
 print("SUMMARY")
@@ -88,3 +89,6 @@ print(generate_dynamic_recommendations())
 
 print("\nTRADE NOTES ANALYSIS")
 print(analyze_trade_notes())
+
+print("\nBEHAVIORAL INSIGHTS")
+print(get_behavioral_insights())

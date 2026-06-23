@@ -161,6 +161,16 @@ async def analyze_trade_notes():
             f"{BASE_URL}/behavior/trade-notes"
         )
         return response.json()
+    
+
+@mcp.tool()
+async def get_behavioral_insights():
+    """Generate behavioral trading insights from trade notes."""
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"{BASE_URL}/behavior/insights"
+        )
+        return response.json()    
 
 
 @mcp.tool()

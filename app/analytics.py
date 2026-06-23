@@ -785,6 +785,7 @@ def get_trading_coach_report():
     edge = analyze_my_edge()
     dynamic_recommendations = generate_dynamic_recommendations()["recommendations"]
     notes_analysis = analyze_trade_notes()
+    behavioral_insights = get_behavioral_insights()
 
     overall = edge["overall_performance"]
     confidence = get_analysis_confidence(overall["total_trades"])
@@ -828,6 +829,13 @@ Trade Notes Behavior
     f"- {item['category']}: {item['trades']} trades | Profit: {item['net_profit']} | Win Rate: {item['win_rate']}%"
     for item in notes_analysis
 ]) if isinstance(notes_analysis, list) else "- No trade notes data available."}
+
+
+Behavioral Insights
+{chr(10).join([
+    f"- {insight}"
+    for insight in behavioral_insights["insights"]
+]) if isinstance(behavioral_insights, dict) and "insights" in behavioral_insights else "- No behavioral insights available."}
 
 Coach Recommendation
 {chr(10).join([f"- {rec}" for rec in dynamic_recommendations])}
@@ -998,3 +1006,48 @@ def analyze_trade_notes():
 
     return results
 
+def get_behavioral_insights():
+
+    notes_analysis = analyze_trade_notes()
+
+    if not isinstance(notes_analysis, list) or len(notes_analysis) == 0:
+        return {
+            "message": "No behavioral notes data available"
+        }
+
+    sorted_by_profit = sorted(
+        notes_analysis,
+        key=lambda x: x["net_profit"],
+        reverse=True
+    )
+
+    strongest_behavior = sorted_by_profit[0]
+    weakest_behavior = sorted_by_profit[-1]
+
+    insights = []
+
+    if weakest_behavior["net_profit"] < 0:
+        insights.append(
+            f"Your most costly behavior is {weakest_behavior['category']} with {weakest_behavior['net_profit']} profit and {weakest_behavior['win_rate']}% win rate."
+        )
+
+    if strongest_behavior["net_profit"] > 0:
+        insights.append(
+            f"Your strongest behavior is {strongest_behavior['category']} with {strongest_behavior['net_profit']} profit and {strongest_behavior['win_rate']}% win rate."
+        )
+
+    if weakest_behavior["category"] in ["revenge", "fomo", "early_entry"]:
+        insights.append(
+            f"Create a rule to pause trading when {weakest_behavior['category']} appears in your behavior."
+        )
+
+    if strongest_behavior["category"] in ["discipline", "confidence"]:
+        insights.append(
+            f"Your data suggests you perform better when trading with {strongest_behavior['category']}."
+        )
+
+    return {
+        "strongest_behavior": strongest_behavior,
+        "weakest_behavior": weakest_behavior,
+        "insights": insights
+    }
