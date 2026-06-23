@@ -140,7 +140,27 @@ async def analyze_my_edge():
         response = await client.get(
             f"{BASE_URL}/performance/coach"
         )
-        return response.json()    
+        return response.json()   
+    
+
+@mcp.tool()
+async def get_trading_coach_report():
+    """Generate a human-readable trading coach report."""
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"{BASE_URL}/performance/coach-report"
+        )
+        return response.json() 
+    
+    
+@mcp.tool()
+async def analyze_trade_notes():
+    """Analyze trade notes for behavioral patterns such as FOMO, early entry, revenge, discipline, fear, and confidence."""
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"{BASE_URL}/behavior/trade-notes"
+        )
+        return response.json()
 
 
 @mcp.tool()

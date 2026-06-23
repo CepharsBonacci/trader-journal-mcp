@@ -17,7 +17,10 @@ from app.analytics import (
     get_drawdown_analysis,
     get_strategy_emotion_performance,
     get_equity_curve,
-    analyze_my_edge
+    analyze_my_edge,
+    get_trading_coach_report,
+    generate_dynamic_recommendations,
+    analyze_trade_notes
 )
 
 print("SUMMARY")
@@ -76,3 +79,12 @@ print(get_equity_curve())
 
 print("\nMY EDGE ANALYSIS")
 print(analyze_my_edge())
+
+print("\nTRADING COACH REPORT")
+print(get_trading_coach_report())
+
+print("\nDYNAMIC RECOMMENDATIONS")
+print(generate_dynamic_recommendations())
+
+print("\nTRADE NOTES ANALYSIS")
+print(analyze_trade_notes())

@@ -780,3 +780,221 @@ def analyze_my_edge():
         }
     }
 
+def get_trading_coach_report():
+
+    edge = analyze_my_edge()
+    dynamic_recommendations = generate_dynamic_recommendations()["recommendations"]
+    notes_analysis = analyze_trade_notes()
+
+    overall = edge["overall_performance"]
+    confidence = get_analysis_confidence(overall["total_trades"])
+    strongest = edge["strongest_edges"]
+    weakest = edge["weakest_areas"]
+
+    best_strategy = strongest["best_strategy"]
+    best_setup = strongest["best_setup"]
+    best_emotion = strongest["best_emotion"]
+
+    worst_strategy = weakest["worst_strategy"]
+    worst_setup = weakest["worst_setup"]
+    worst_emotion = weakest["worst_emotion"]
+
+    report = f"""
+📊 Trading Coach Report
+
+Overall Performance
+- Total Trades: {overall["total_trades"]}
+- Win Rate: {overall["win_rate"]}%
+- Net Profit: {overall["net_profit"]}
+- Expectancy: {overall["expectancy"]}
+- Risk-Reward Ratio: {overall["risk_reward_ratio"]}
+- Max Drawdown: {overall["max_drawdown"]}
+- Recovery Factor: {overall["recovery_factor"]}
+- Confidence Level: {confidence["level"]}
+- Confidence Note: {confidence["reason"]}
+
+Strongest Edge
+- Best Strategy: {best_strategy["strategy"]} | Profit: {best_strategy["net_profit"]} | Win Rate: {best_strategy["win_rate"]}%
+- Best Setup: {best_setup["setup"]} | Profit: {best_setup["net_profit"]} | Win Rate: {best_setup["win_rate"]}%
+- Best Emotion: {best_emotion["emotion"]} | Profit: {best_emotion["net_profit"]} | Win Rate: {best_emotion["win_rate"]}%
+
+Weakest Areas
+- Worst Strategy: {worst_strategy["strategy"]} | Profit: {worst_strategy["net_profit"]} | Win Rate: {worst_strategy["win_rate"]}%
+- Worst Setup: {worst_setup["setup"]} | Profit: {worst_setup["net_profit"]} | Win Rate: {worst_setup["win_rate"]}%
+- Worst Emotion: {worst_emotion["emotion"]} | Profit: {worst_emotion["net_profit"]} | Win Rate: {worst_emotion["win_rate"]}%
+
+Trade Notes Behavior
+{chr(10).join([
+    f"- {item['category']}: {item['trades']} trades | Profit: {item['net_profit']} | Win Rate: {item['win_rate']}%"
+    for item in notes_analysis
+]) if isinstance(notes_analysis, list) else "- No trade notes data available."}
+
+Coach Recommendation
+{chr(10).join([f"- {rec}" for rec in dynamic_recommendations])}
+"""
+
+    return {
+        "report": report.strip()
+    }
+
+def generate_dynamic_recommendations():
+
+    edge = analyze_my_edge()
+
+    overall = edge["overall_performance"]
+    strongest = edge["strongest_edges"]
+    weakest = edge["weakest_areas"]
+
+    recommendations = []
+
+    # Overall expectancy
+    if overall["expectancy"] is not None:
+        if overall["expectancy"] > 0:
+            recommendations.append(
+                f"Your trading expectancy is positive at {overall['expectancy']}. This means your current trading system has a profitable edge."
+            )
+        else:
+            recommendations.append(
+                f"Your trading expectancy is negative at {overall['expectancy']}. Reduce risk and review your strategy before scaling."
+            )
+
+    # Win rate check
+    if overall["win_rate"] is not None:
+        if overall["win_rate"] >= 60:
+            recommendations.append(
+                f"Your win rate is strong at {overall['win_rate']}%. Focus on preserving this edge with discipline."
+            )
+        elif overall["win_rate"] < 45:
+            recommendations.append(
+                f"Your win rate is low at {overall['win_rate']}%. Review your entries and avoid low-quality setups."
+            )
+
+    # Drawdown check
+    if overall["max_drawdown"] is not None:
+        if abs(overall["max_drawdown"]) > overall["net_profit"]:
+            recommendations.append(
+                "Your drawdown is larger than your net profit. This suggests your risk may be too high."
+            )
+        else:
+            recommendations.append(
+                "Your drawdown is controlled relative to your net profit."
+            )
+
+    # Strongest edge
+    best_strategy = strongest.get("best_strategy")
+    best_setup = strongest.get("best_setup")
+    best_emotion = strongest.get("best_emotion")
+
+    if best_strategy:
+        recommendations.append(
+            f"Your best-performing strategy is {best_strategy['strategy']} with {best_strategy['net_profit']} profit and {best_strategy['win_rate']}% win rate."
+        )
+
+    if best_setup:
+        recommendations.append(
+            f"Your strongest setup is {best_setup['setup']}. Consider prioritizing this setup when market conditions align."
+        )
+
+    if best_emotion:
+        recommendations.append(
+            f"You perform best when your emotional state is {best_emotion['emotion']}. Track this before entering trades."
+        )
+
+    # Weakest areas
+    worst_strategy = weakest.get("worst_strategy")
+    worst_setup = weakest.get("worst_setup")
+    worst_emotion = weakest.get("worst_emotion")
+
+    if worst_strategy:
+        recommendations.append(
+            f"Your weakest strategy is {worst_strategy['strategy']}. Consider pausing or reducing this strategy until it improves."
+        )
+
+    if worst_setup:
+        recommendations.append(
+            f"Your weakest setup is {worst_setup['setup']}. Review screenshots and trade notes before taking more of these trades."
+        )
+
+    if worst_emotion:
+        recommendations.append(
+            f"Trades taken while {worst_emotion['emotion']} are hurting performance. Avoid trading when this emotion appears."
+        )
+
+    return {
+        "recommendations": recommendations
+    }
+
+def get_analysis_confidence(total_trades):
+
+    if total_trades < 30:
+        return {
+            "level": "Low",
+            "reason": f"Only {total_trades} trades analyzed. Insights are useful for testing but not statistically strong yet."
+        }
+
+    elif total_trades < 100:
+        return {
+            "level": "Medium",
+            "reason": f"{total_trades} trades analyzed. Insights are becoming more reliable, but more data is recommended."
+        }
+
+    else:
+        return {
+            "level": "High",
+            "reason": f"{total_trades} trades analyzed. Insights are based on a stronger sample size."
+        }
+    
+def analyze_trade_notes():
+
+    query = text("""
+        SELECT
+            ticket,
+            profit,
+            notes
+        FROM trades
+        WHERE notes IS NOT NULL
+    """)
+
+    df = pd.read_sql(query, engine)
+
+    if len(df) == 0:
+        return {
+            "message": "No trade notes available"
+        }
+
+    keywords = {
+        "fomo": ["fomo", "missed", "chasing", "chase"],
+        "early_entry": ["early", "too early"],
+        "revenge": ["revenge", "after loss"],
+        "discipline": ["followed plan", "plan", "disciplined"],
+        "fear": ["fear", "scared", "hesitated"],
+        "confidence": ["confident", "clean", "strong"]
+    }
+
+    results = []
+
+    for category, words in keywords.items():
+
+        matching_trades = df[
+            df["notes"]
+            .str.lower()
+            .apply(lambda note: any(word in note for word in words))
+        ]
+
+        if len(matching_trades) == 0:
+            continue
+
+        wins = matching_trades[matching_trades["profit"] > 0]
+        losses = matching_trades[matching_trades["profit"] < 0]
+
+        results.append({
+            "category": category,
+            "trades": len(matching_trades),
+            "net_profit": float(matching_trades["profit"].sum()),
+            "winning_trades": len(wins),
+            "losing_trades": len(losses),
+            "win_rate": round((len(wins) / len(matching_trades)) * 100, 2)
+        })
+
+    return results
+

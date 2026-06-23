@@ -7,7 +7,8 @@ from app.analytics import (
     get_risk_reward_ratio,
     get_drawdown_analysis,
     get_equity_curve,
-    analyze_my_edge
+    analyze_my_edge,
+    get_trading_coach_report
 )
 
 router = APIRouter(prefix="/performance", tags=["Performance"])
@@ -63,4 +64,11 @@ def coach():
     return {
         "status": "success",
         "data": analyze_my_edge()
+    }
+
+@router.get("/coach-report")
+def coach_report():
+    return {
+        "status": "success",
+        "data": get_trading_coach_report()
     }
